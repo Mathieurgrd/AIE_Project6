@@ -1,0 +1,13 @@
+Rapport de couverture Pytest (feature/test)
+Commande : uv run pytest
+Résultat : 15 passed, couverture src/ = 77 %
+
+Fichiers les plus couverts :
+- src/features.py, src/ml/predict.py, src/api/schemas.py : ~100 %
+- src/api/main.py : 89 % (branches d'erreur health si BDD/modèle down)
+
+Moins couverts volontairement :
+- src/db/create_db.py : script de chargement one-shot (Docker)
+- src/db/trace.py : chemin réel Postgres, mocké côté API
+
+Les cas critiques testés : FE, pickle (employés 1 et 2), 401, 404, 200.
