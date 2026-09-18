@@ -1,4 +1,8 @@
-"""Fixtures partagées : une ligne employé issue des CSV (sans Postgres)."""
+"""Données de test partagées (CSV réels, sans PostgreSQL).
+
+pytest injecte automatiquement `employees_df` dans les tests qui le demandent
+en argument. scope=session : un seul chargement pour toute la suite.
+"""
 
 from __future__ import annotations
 
@@ -13,6 +17,7 @@ DATA = ROOT / "data" / "raw"
 
 @pytest.fixture(scope="session")
 def employees_df() -> pd.DataFrame:
+    """Jointure SIRH + eval + sondage"""
     sirh = pd.read_csv(DATA / "extrait_sirh.csv")
     evaluations = pd.read_csv(DATA / "extrait_eval.csv")
     sondages = pd.read_csv(DATA / "extrait_sondage.csv")
@@ -27,4 +32,5 @@ def employees_df() -> pd.DataFrame:
 
 
 def employee_dict(employees_df: pd.DataFrame, employee_id: int) -> dict:
+    """Une ligne employé au format attendu par predict_attrition."""
     return employees_df.loc[employees_df["id_employee"] == employee_id].iloc[0].to_dict()

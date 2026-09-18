@@ -1,4 +1,9 @@
-"""Tests fonctionnels de l'API : auth, 404, réponse (BDD mockée)."""
+"""Tests HTTP de l'API, sans Docker.
+
+FastAPI `dependency_overrides` remplace get_db / verify_api_key.
+`monkeypatch.setattr` remplace predict_and_trace : on teste le routage
+(status 200/401/404), pas Postgres ni le pickle.
+"""
 
 from fastapi.testclient import TestClient
 
@@ -7,18 +12,20 @@ from src.api.main import app
 
 
 def _client(*, auth: bool) -> TestClient:
+    """Client HTTP in-process. auth=True : on saute la vérif de clé."""
     app.dependency_overrides.clear()
     if auth:
         app.dependency_overrides[verify_api_key] = lambda: None
 
     def fake_db():
-        yield None
+        yield None  # session fictive : predict_and_trace est mocké ailleurs
 
     app.dependency_overrides[get_db] = fake_db
     return TestClient(app)
 
 
 def test_health_renvoie_200_et_le_modele():
+    """/health est public : pas de X-API-Key."""
     with _client(auth=False) as client:
         response = client.get("/health")
     assert response.status_code == 200
@@ -29,6 +36,7 @@ def test_health_renvoie_200_et_le_modele():
 
 
 def test_predict_sans_cle_fait_401(monkeypatch):
+    """Sans header : 401. On force une clé connue pour ne pas tomber en 500."""
     monkeypatch.setattr(
         "src.api.deps.dotenv_values",
         lambda *args, **kwargs: {"API_KEY": "test-secret"},
@@ -54,6 +62,7 @@ def test_predict_mauvaise_cle_fait_401(monkeypatch):
 
 
 def test_predict_ok_quand_trace_reussit(monkeypatch):
+    """Le métier est stubé : on vérifie que l'API relaie bien le JSON."""
     monkeypatch.setattr(
         "src.api.main.predict_and_trace",
         lambda id_employee, session=None: {
@@ -75,6 +84,7 @@ def test_predict_ok_quand_trace_reussit(monkeypatch):
 
 
 def test_predict_employe_inconnu_fait_404(monkeypatch):
+    """ValueError métier → HTTP 404."""
     def raise_missing(id_employee, session=None):
         raise ValueError(f"Employé {id_employee} introuvable ou incomplet.")
 

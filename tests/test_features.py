@@ -6,6 +6,7 @@ from src.features import add_features
 from tests.conftest import employee_dict
 
 
+# Colonnes créées par le FE  — le pickle les attend.
 ENGINEERED = [
     "satisfaction_globale",
     "satisfaction_min",
@@ -27,6 +28,7 @@ def test_add_features_ajoute_les_colonnes_metier(employees_df):
 
 
 def test_add_features_ne_modifie_pas_l_entree(employees_df):
+    """La fonction travaille sur une copie (X.copy())."""
     raw = pd.DataFrame([employee_dict(employees_df, 1)])
     before = list(raw.columns)
     add_features(raw)
@@ -34,6 +36,7 @@ def test_add_features_ne_modifie_pas_l_entree(employees_df):
 
 
 def test_satisfaction_globale_est_la_moyenne():
+    """(1+3+2+2)/4 = 2 ; min=1 ; max-min=2."""
     raw = pd.DataFrame(
         [
             {
@@ -56,6 +59,7 @@ def test_satisfaction_globale_est_la_moyenne():
 
 
 def test_anciennete_zero_ne_produit_pas_d_inf():
+    """Division par 0 d'ancienneté → NaN puis fillna(0), pas Inf."""
     raw = pd.DataFrame(
         [
             {
