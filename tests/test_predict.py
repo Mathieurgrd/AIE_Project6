@@ -1,4 +1,7 @@
-"""Tests fonctionnels du modèle : même chemin que l'API, sans Postgres."""
+"""Inférence réelle (pickle), sans Postgres.
+
+Les employés 1 et 2 servent de golden tests : mêmes sorties qu'en démo Swagger.
+"""
 
 from src.ml.predict import COLUMNS_UNUSED, predict_attrition, prepare_features
 from tests.conftest import employee_dict
@@ -9,7 +12,7 @@ def test_employe_1_predit_depart(employees_df):
     assert result["prediction"] == 1
     assert result["label"] == "Oui"
     assert result["proba_depart"] >= result["seuil_utilise"]
-    assert 0.48 < result["seuil_utilise"] < 0.49
+    assert 0.48 < result["seuil_utilise"] < 0.49  # seuil notebook 05 ≈ 0,484
 
 
 def test_employe_2_predit_reste(employees_df):
@@ -20,6 +23,7 @@ def test_employe_2_predit_reste(employees_df):
 
 
 def test_pourcentage_salaire_est_numerique(employees_df):
+    """CSV brut = '11 %' ; le scaler sklearn exige un float."""
     row = employee_dict(employees_df, 1)
     assert isinstance(row["augementation_salaire_precedente"], str)
     assert "%" in str(row["augementation_salaire_precedente"])
@@ -28,6 +32,7 @@ def test_pourcentage_salaire_est_numerique(employees_df):
 
 
 def test_colonnes_inutiles_absentes_apres_prepare(employees_df):
+    """Id / constantes / cible / 3 col. corrélées ne doivent plus être là."""
     prepared = prepare_features(employee_dict(employees_df, 1))
     for col in COLUMNS_UNUSED:
         assert col not in prepared.columns
